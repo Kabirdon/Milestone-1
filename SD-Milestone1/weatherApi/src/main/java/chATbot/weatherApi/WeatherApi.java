@@ -1,24 +1,74 @@
 package chATbot.weatherApi;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
-public class WeatherApi {
-    public static void main(String[] args) {
+public class WeatherApiGUI extends JFrame {
+    private JLabel temperatureLabel;
+    private JButton checkButton;
+    JTextField cityField;
+
+    public WeatherApiGUI() {
+        setTitle("Weather API");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setSize(400, 200);
+
+        // create components
+        JLabel cityLabel = new JLabel("City:");
+        cityField = new JTextField();
+        temperatureLabel = new JLabel("Temperature:");
+        checkButton = new JButton("Check Weather");
+        checkButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                checkWeather();
+            }
+        });
+
+        // add components to frame
+        JPanel panel = new JPanel(new GridLayout(3, 2));
+        panel.add(cityLabel);
+        panel.add(cityField);
+        panel.add(new JLabel());
+        panel.add(checkButton);
+        panel.add(temperatureLabel);
+        add(panel);
+
+        setVisible(true);
+    }
+
+    private void checkWeather() {
         try {
+            String city = cityField.getText();
+            if (city.equals("")) {
+                JOptionPane.showMessageDialog(this, "Please enter a city name.");
+                return;
+            }
+            String greeting;
+            String name = System.getProperty("user.name");
+            int hour = LocalTime.now().getHour();
+            if (hour < 12) {
+                greeting = "Good morning";
+            } else if (hour < 18) {
+                greeting = "Good afternoon";
+            } else {
+                greeting = "Good evening";
+            }
+
             // Set the API endpoint URL and your API key
-            String endpointUrl = "https://api.openweathermap.org/data/2.5/weather?q=cork&appid=30fc7ee828b5d4f90ce78df1ac686aca&units=metric";
-            
+            String endpointUrl = "https://api.openweathermap.org/data/2.5/weather?q=" + city + "&appid=30fc7ee828b5d4f90ce78df1ac686aca&units=metric";
+
             // Create a new HTTP connection to the endpoint URL
             URL url = new URL(endpointUrl);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
-            
+
             // Read the response from the API endpoint
             BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
             String inputLine;
@@ -27,16 +77,13 @@ public class WeatherApi {
                 response.append(inputLine);
             }
             in.close();
-            
+
             // Parse the JSON response into a Java object
             JSONObject jsonObject = new JSONObject(response.toString());
-            
+
             // Extract the temperature from the API response
             double temperature = jsonObject.getJSONObject("main").getDouble("temp");
-            
-           System.out.println(temperature);
-           
-      
+
             // Determine clothing suggestion based on the temperature
             String clothingSuggestion;
             if (temperature < 10) {
@@ -46,12 +93,16 @@ public class WeatherApi {
             } else {
                 clothingSuggestion = "It's warm, wear a t-shirt and shorts.";
             }
-            
-            // Print the clothing suggestion to the console
-            System.out.println(clothingSuggestion);
-            
+
+            // Display the temperature and clothing suggestion on the GUI
+            temperatureLabel.setText("Temperature in " + city + ": " + temperature + " °C. " + clothingSuggestion);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static void main(String[] args) {
+        WeatherApiGUI gui = new WeatherApiGUI();
     }
 }
